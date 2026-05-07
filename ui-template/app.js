@@ -71,8 +71,9 @@ function parseQuestionContent(content, attrs, chapterMeta) {
     else if (mode === "a") answer += "\n" + line;
     else if (mode === "e") explanation += "\n" + line;
   }
+  const baseId = attrs.id || `q-${Math.random().toString(36).slice(2, 8)}`;
   return {
-    id: attrs.id || `q-${Math.random().toString(36).slice(2, 8)}`,
+    id: `${baseId}-${chapterMeta.id}`,
     type: attrs.type || (options.length ? "mc" : "short"),
     source: attrs.source || "generated",
     chapterId: chapterMeta.id,
@@ -93,10 +94,16 @@ function renderQuestion(q) {
   const labelMap = { "practice-quiz": "Practice Quiz", "predicted": "Predicted Question", "generated": "Practice Question" };
   const label = labelMap[q.source] || "Question";
 
+  // For MC with no explicit answer text, derive it from the correct option
+  const answerText = q.answer || (q.type === "mc"
+    ? (q.options.find(o => o.correct) || {}).text || ""
+    : "");
+  const hasAnswer = !!answerText;
+
   let optionsHtml = "";
   if (q.type === "mc" && q.options.length) {
     optionsHtml = `<ul class="quiz-options">${q.options.map((o, i) =>
-      `<li data-correct="${o.correct}" data-idx="${i}">${escapeHtml(o.text)}</li>`).join("")}</ul>`;
+      `<li data-correct="${o.correct}" data-idx="${i}">${marked.parseInline(o.text)}</li>`).join("")}</ul>`;
   } else if (q.type === "short" || q.type === "fill") {
     optionsHtml = `<input type="text" class="short-answer-input" placeholder="Type your answer...">`;
   }
@@ -106,10 +113,10 @@ function renderQuestion(q) {
     <div class="quiz-text">${marked.parseInline(q.question)}</div>
     ${optionsHtml}
     <div class="btn-row">
-      <button class="answer-btn">Show Answer</button>
+      ${hasAnswer || q.type === "mc" ? '<button class="answer-btn">Show Answer</button>' : ""}
       ${q.explanation ? '<button class="toggle-btn">Show Explanation</button>' : ""}
     </div>
-    <div class="answer-box"><span class="answer-text">${escapeHtml(q.answer)}</span></div>
+    ${hasAnswer || q.type === "mc" ? `<div class="answer-box"><span class="answer-text">${marked.parseInline(answerText)}</span></div>` : ""}
     ${q.explanation ? `<div class="explanation">${marked.parse(q.explanation)}</div>` : ""}
   `;
 

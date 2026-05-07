@@ -98,12 +98,63 @@ chapters:
 
 **Goal:** for each chapter in the plan, write a textbook chapter that *teaches* the topic, using the listed source MDs as ground truth.
 
-For each chapter, launch one synthesis agent in parallel. Each agent gets:
-- The chapter entry from the plan
-- Full bodies of the listed source MDs
-- Any quiz questions tagged to this chapter
+For each chapter, launch one synthesis agent in parallel. Use this exact prompt template for every agent (fill in the `<PLACEHOLDERS>`):
 
-It writes `chapters/<order>-<id>.md` with:
+```
+Write a textbook chapter for the following topic. Use the source material below as
+your only source of truth — do not invent facts the sources don't cover.
+
+Chapter plan entry:
+<PASTE YAML ENTRY FROM chapter-plan.yaml>
+
+Source material:
+<PASTE FULL BODY OF EACH LISTED SOURCE MD>
+
+Quiz questions to embed (if any):
+<PASTE RELEVANT QUESTIONS>
+
+Output a single markdown file to: chapters/<ORDER>-<ID>.md
+
+STRUCTURE (in this order):
+1. YAML frontmatter block (id, title, order, topics, sources)
+2. ## Why this matters
+3. ## Core concepts
+4. ## Mechanics
+5. ## Worked example
+6. ## Key takeaways
+7. ## Practice questions  ← embed ALL provided quiz questions here, plus generate 3–6 more
+
+QUESTION FORMAT — every question must use this EXACT format. No exceptions:
+
+:::question id=<unique-id> type=<mc|short|fill> source=<practice-quiz|predicted|generated>
+**Q:** Question text here
+
+- [ ] Wrong option
+- [x] Correct option
+- [ ] Wrong option
+
+**Answer:** Short answer text
+
+**Explanation:** Full explanation here.
+:::
+
+RULES (breaking any causes the question to not display):
+- Opening line: :::question followed by space-separated key=value. NO curly braces. NO quotes.
+- id must be unique across all chapters. Prefix generated questions with gen-<chapter-id>-<n>.
+- Exactly one - [x] per mc question. All other options use - [ ].
+- **Q:**, **Answer:**, **Explanation:** each on their own line with that exact spelling.
+- The block MUST end with ::: on its own line. Without it the block is invisible.
+- For short/fill questions: omit the option list entirely.
+- Only write questions about content that appears in the source material.
+
+BANNED FORMATS (do not use any of these):
+  :::question{id="x" type="mc"}     ← curly braces not allowed
+  ::: answer foo :::                 ← not a valid closing
+  source: generated\nprompt: ...     ← YAML inside the block not allowed
+  choices:\n  - text: foo\n    correct: true  ← YAML options not allowed
+```
+
+Each agent writes `chapters/<order>-<id>.md` with:
 
 ```yaml
 ---
@@ -186,9 +237,22 @@ Generate practice questions even if no quiz was provided — aim for 3–6 per c
 
 ---
 
-## Stage 4 — Manifest + UI
+## Stage 4 — Validate question blocks
 
-After all chapters are written:
+Before building the manifest, run:
+
+```bash
+python scripts/validate.py <project>/chapters/
+```
+
+- Exit 0: all blocks parsed correctly — proceed to Stage 5.
+- Exit 1: lists every chapter file with invalid blocks and the specific error per block. Re-run the synthesis agent for each failing chapter (pass it the same inputs plus the validation errors so it knows what to fix). Repeat until `validate.py` exits 0.
+
+---
+
+## Stage 5 — Manifest + UI
+
+After validation passes:
 
 1. Read every chapter's frontmatter; build `manifest.json`:
    ```json
@@ -199,7 +263,7 @@ After all chapters are written:
      ]
    }
    ```
-2. Copy `ui-template/{index.html,app.js,app.css}` into `study-output/`
+2. Copy `ui-template/{index.html,app.js,app.css}` and the `chapters/` folder into `study-output/`
 3. Start a local HTTP server from `study-output/` in the background:
    ```bash
    cd <project>/study-output && python -m http.server 8000
