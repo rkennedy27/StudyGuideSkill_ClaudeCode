@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 BLOCK_RE = re.compile(r":::question([{\s][^\n]*)\n([\s\S]*?)\n:::", re.MULTILINE)
-ATTR_RE = re.compile(r'(\w+)=["\']?([^"\'\\s}]+)["\']?')
+ATTR_RE = re.compile(r'(\w+)=["\']?([^"\'\s}]+)["\']?')
 
 
 def parse_attrs(attr_line: str) -> dict:
