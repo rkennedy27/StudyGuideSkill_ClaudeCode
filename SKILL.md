@@ -159,7 +159,11 @@ After all chapters are written:
    }
    ```
 2. Copy `ui-template/{index.html,app.js,app.css}` into `study-output/`
-3. Tell the user to open `study-output/index.html`
+3. Start a local HTTP server from `study-output/` in the background:
+   ```bash
+   cd <project>/study-output && python -m http.server 8000
+   ```
+4. Tell the user to open **http://localhost:8000** in their browser. Do NOT tell them to open `index.html` directly — `file://` blocks `fetch()` and the site will fail to load.
 
 ---
 
