@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Guide</title>
+<link rel="stylesheet" href="app.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<nav id="toc-bar">
+  <div class="toc-title" onclick="document.getElementById('toc-bar').classList.toggle('open')">
+    <h2 id="course-title">Study Guide</h2>
+    <span class="toc-toggle-icon">&#9660;</span>
+  </div>
+  <div id="toc-dropdown"></div>
+</nav>
+
+<div class="container">
+
+  <div class="hero">
+    <h1 id="hero-title">Study Guide</h1>
+    <p id="hero-subtitle"></p>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Search chapters and questions...">
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="study">Study Guide</button>
+    <button class="tab-btn" data-tab="questions">Questions Only</button>
+  </div>
+
+  <div id="study-tab" class="tab-content active">
+    <div id="chapters-container">
+      <p class="loading">Loading chapters...</p>
+    </div>
+  </div>
+
+  <div id="questions-tab" class="tab-content">
+    <div id="questions-container"></div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
