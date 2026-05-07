@@ -123,7 +123,7 @@ Body structure (enforce in the prompt, not the schema):
 5. **Key takeaways** — short bulleted summary
 6. **Practice questions** — inline `:::question` blocks (see format below)
 
-**Question block format** (parsed by the UI):
+**Question block format** (parsed by the UI — follow this exactly):
 
 ````markdown
 :::question id=pq-3 type=mc source=practice-quiz
@@ -139,9 +139,50 @@ Body structure (enforce in the prompt, not the schema):
 :::
 ````
 
-`type` can be `mc` (multiple choice), `short` (free response), or `fill` (fill-in-the-blank). `source` can be `practice-quiz`, `predicted`, or `generated`.
+**Rules — violating any of these causes the question to not render:**
+- The opening line is `:::question` followed by space-separated `key=value` pairs. No curly braces. No quotes around values.
+- `id` must be unique across all chapters (e.g., `pq-1`, `gen-permissions-1`).
+- `type` must be exactly `mc`, `short`, or `fill`.
+- `source` must be exactly `practice-quiz`, `predicted`, or `generated`.
+- The question text line starts with `**Q:**` on its own line.
+- Multiple-choice options each start with `- [ ]` (wrong) or `- [x]` (correct, exactly one per question).
+- `**Answer:**` and `**Explanation:**` are on their own lines.
+- The block closes with `:::` on its own line. This closing `:::` is required — without it the block is ignored.
+- Do NOT write `:::question{...}`, `::: answer`, `source: generated prompt:`, `choices:`, or any other format. Only the format above is parsed.
 
-Generate practice questions even if no quiz was provided — aim for 3–6 per chapter covering the most quiz-worthy facts.
+**Wrong (do not use):**
+````markdown
+:::question{id="pq-1" type="mc"}
+source: generated prompt: Which class...
+choices:
+- text: Intent correct: false
+- text: ActivityResultLauncher correct: true
+::: answer ActivityResultLauncher :::
+````
+
+**Correct:**
+````markdown
+:::question id=gen-permissions-1 type=mc source=generated
+**Q:** Which class do you use to register for a permission result callback?
+
+- [ ] Intent
+- [x] ActivityResultLauncher
+- [ ] PermissionManager
+
+**Answer:** ActivityResultLauncher
+
+**Explanation:** ActivityResultLauncher is returned by registerForActivityResult.
+:::
+````
+
+`type` values:
+- `mc` — multiple choice, requires `- [ ]` / `- [x]` options
+- `short` — free-response text input, no options
+- `fill` — fill-in-the-blank text input, no options
+
+`source` values: `practice-quiz`, `predicted`, `generated`
+
+Generate practice questions even if no quiz was provided — aim for 3–6 per chapter covering the most quiz-worthy facts. Every question MUST use the exact format above.
 
 ---
 

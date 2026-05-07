@@ -25,24 +25,28 @@ function parseFrontmatter(md) {
 }
 
 // ---------- Question block extraction ----------
-// Format:
-// :::question id=pq-3 type=mc source=practice-quiz
-// **Q:** ...
-// - [ ] wrong
-// - [x] right
-// **Answer:** ...
-// **Explanation:** ...
-// :::
-const QUESTION_RE = /:::question\s+([^\n]+)\n([\s\S]*?)\n:::/g;
+// Canonical format:  :::question id=pq-3 type=mc source=practice-quiz
+// Fallback format:   :::question{id="pq-3" type="mc" source="practice-quiz"}
+// Both close with a lone ::: on its own line.
+const QUESTION_RE = /:::question([{\s][^\n]*)\n([\s\S]*?)\n:::/g;
+
+function parseAttrs(attrLine) {
+  const attrs = {};
+  // strip surrounding braces if present
+  const stripped = attrLine.replace(/^\{|\}$/g, "").trim();
+  // match key=value or key="value"
+  const re = /(\w+)=["']?([^"'\s}]+)["']?/g;
+  let m;
+  while ((m = re.exec(stripped)) !== null) {
+    attrs[m[1]] = m[2];
+  }
+  return attrs;
+}
 
 function extractQuestions(body, chapterMeta) {
   const questions = [];
   const replaced = body.replace(QUESTION_RE, (_, attrLine, content) => {
-    const attrs = {};
-    for (const part of attrLine.split(/\s+/)) {
-      const eq = part.indexOf("=");
-      if (eq > 0) attrs[part.slice(0, eq)] = part.slice(eq + 1);
-    }
+    const attrs = parseAttrs(attrLine);
     const q = parseQuestionContent(content, attrs, chapterMeta);
     questions.push(q);
     return `<div class="question-anchor" data-qid="${q.id}"></div>`;
